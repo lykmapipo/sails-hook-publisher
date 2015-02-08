@@ -17,149 +17,55 @@ $ npm install --save sails-hook-publisher
 ```
 
 ## Usage
-In the global scope `Publisher` will be available for use and it will expose the following `kue api's`:
+In sails hooks, `sails.hooks.publisher` will be available for use and it will expose:
 
-### Creating Jobs
-Calling `Publisher.create()` with the `type of job`, and arbitrary `job data` will return a kue `Job`, which can then be `save()`ed, adding it to redis, with a default priority level of "normal". The `save()` method optionally accepts a callback, responding with an `error` if something goes wrong. The `title` key is special-cased, and will display in the job listings within the UI, making it easier to find a specific job.
+- `queue` : a `kue` based job queue specifially for publish jobs. If you want to consume jobs you may use [sails-hook-subscriber](https://github.com/lykmapipo/sails-hook-subscriber). It is a valid `kue queue` so you can also invoke other `kue` methods from it. [See](https://github.com/LearnBoost/kue#overview)
 
+- `create` or `createJob` : which is a proxy for `kue.create` and `kue.createJob` respectively. See [kue creating jobs for detailed explanations](https://github.com/LearnBoost/kue#creating-jobs) 
+
+## Publishing Jobs
+Use `sails.hooks.publisher.create` or `sails.hooks.publisher.createJob` to publish job(s) as way you used with `kue`. You can publish jobs in any place within your sails application where `sails.hooks` is accessible and `sails.hook.publisher` is loaded and available.
+
+Example
 ```js
-var job = Publisher.create('email', {
-    title: 'welcome email for tj'
-  , to: 'tj@learnboost.com'
-  , template: 'welcome-email'
-}).save( function(err){
-   if( !err ) console.log( job.id );
-});
+//in AuthController.js
+//in register(request,response) method
+
+register: function(request,response){
+      //your codes ....
+
+      //grab publisher
+      var publisher = sails.hooks.publisher;
+      
+      //publish send confirmation email
+      var job = publisher.create('email', {
+        title: 'Welcome'
+      , to: request.email,
+      , template: 'welcome-email'
+     })
+     .save();
+}
 ```
+*Note: The above example demostrate `sails-hook-publisher` usage in controller you can use it in your models and services too*
 
-### Job Priority
-To specify the priority of a job, simply invoke the `priority()` method with a number, or priority name, which is mapped to a number.
+## Queue Events
+`sails-hook-publisher` expose `queue` which is the underlying `kue queue` it use for listening for queue events. For you to listen on your job events on the queue, just add listener on the publisher `queue.on`.
 
+Example:
 ```js
-Publisher.create('email', {
-    title: 'welcome email for tj'
-  , to: 'tj@learnboost.com'
-  , template: 'welcome-email'
-}).priority('high').save();
+//somewhere in your codes just once
+//prefered on config/bootstrap.js
+//or custom hook
+//or services
+var publisher = sails.hooks.publisher;
+
+//add listener on the queue
+publisher
+          .queue
+          .on('job complete', function(id, deliveryStatus) {
+              //your codes here
+          });
 ```
-
-The default priority map is as follows:
-
-```js
-{
-    low: 10
-  , normal: 0
-  , medium: -5
-  , high: -10
-  , critical: -15
-};
-```
-
-### Failure Attempts
-By default jobs only have _one_ attempt, that is when they fail, they are marked as a failure, and remain that way until you intervene. However, `sails-hook-publisher` allows you to specify this, which is important for jobs such as transferring an email, which upon failure, may usually retry without issue. To do this invoke the `.attempts()` method with a number.
-
-```js
- Publisher.create('email', {
-     title: 'welcome email for tj'
-   , to: 'tj@learnboost.com'
-   , template: 'welcome-email'
- }).priority('high').attempts(5).save();
-```
-
-### Failure Backoff
-Job retry attempts are done as soon as they fail, with no delay, even if your job had a delay set via `Job#delay`. If you want to delay job re-attempts upon failures (known as backoff) you can use `Job#backoff` method in different ways:
-
-```js
-    // Honor job's original delay (if set) at each attempt, defaults to fixed backoff
-    job.attempts(3).backoff( true )
-
-    // Override delay value, fixed backoff
-    job.attempts(3).backoff( {delay: 60*1000, type:'fixed'} )
-
-    // Enable exponential backoff using original delay (if set)
-    job.attempts(3).backoff( {type:'exponential'} )
-
-    // Use a function to get a customized next attempt delay value
-    job.attempts(3).backoff( function( attempts, delay ){
-      return my_customized_calculated_delay;
-    })
-```
-
-In the last scenario, provided function will be executed (via eval) on each re-attempt to get next attempt delay value, meaning that you can't reference external/context variables within it.
-
-**Note** that backoff feature depends on `.delay` under the covers and therefore `.promote()` needs to be called if used.
-
-### Job Events
-Job-specific events are fired on the `Job` instances via `Redis pubsub`. The following events are currently supported:
-
-    - `enqueue` the job is now queued
-    - `promotion` the job is promoted from delayed state to queued
-    - `progress` the job's progress ranging from 0-100
-    - 'failed attempt' the job has failed, but has remaining attempts yet
-    - `failed` the job has failed and has no remaining attempts
-    - `complete` the job has completed
-
-
-For example this may look something like the following:
-
-```js
-var job = Publisher.create('video conversion', {
-    title: 'converting loki\'s to avi'
-  , user: 1
-  , frames: 200
-});
-
-job.on('complete', function(result){
-  console.log("Job completed with data ", result);
-}).on('failed', function(){
-  console.log("Job failed");
-}).on('progress', function(progress){
-  process.stdout.write('\r  job #' + job.id + ' ' + progress + '% complete');
-});
-```
-
-**Note** that Job level events are not guaranteed to be received upon worker process restarts, since the process will lose the reference to the specific Job object. If you want a more reliable event handler look for [Queue Events](#queue-events).
-
-### Queue Events
-Queue-level events provide access to the job-level events previously mentioned, however scoped to the `Queue` instance to apply logic at a "global" level. An example of this is removing completed jobs:
- 
-```js
-Publisher.on('job enqueue', function(id,type){
-  console.log( 'job %s got queued', id );
-});
-
-Publisher.on('job complete', function(id,result){
-  Publisher.Job.get(id, function(err, job){
-    if (err) return;
-    job.remove(function(err){
-      if (err) throw err;
-      console.log('removed completed job #%d', job.id);
-    });
-  });
-});
-```
-
-The events available are the same as mentioned in "Job Events", however prefixed with "job ". 
-
-### Delayed Jobs
-Delayed jobs may be scheduled to be queued for an arbitrary distance in time by invoking the `.delay(ms)` method, passing the number of milliseconds relative to _now_. This automatically flags the `Job` as "delayed". 
-
-```js
-var email = Publisher.create('email', {
-    title: 'Account renewal required'
-  , to: 'tj@learnboost.com'
-  , template: 'renewal-email'
-}).delay(milliseconds)
-  .priority('high')
-  .save();
-```
-
-When using delayed jobs, we must also check the delayed jobs with a timer, promoting them if the scheduled delay has been exceeded. This `setInterval` is defined within `Queue#promote(ms,limit)`, defaulting to a check of top 200 jobs every 5 seconds. If you have a cluster of kue processes, you must call `.promote` in just one (preferably master) process or promotion race can happen.
-
-```js
-Publisher.promote();
-```
-
 
 ## Testing
 
