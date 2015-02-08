@@ -49,7 +49,7 @@ register: function(request,response){
 *Note: The above example demostrate `sails-hook-publisher` usage in controller you can use it in your models and services too*
 
 ## Queue Events
-`sails-hook-publisher` expose `queue` which is the underlying `kue queue` it use for listening for queue events. For you to listen on your job events on the queue, just add listener on the publisher `queue.on`.
+`sails-hook-publisher` expose `queue` which is the underlying `kue queue` it use for listening for queue events. For you to listen on your job events on the queue, just add listener on the publisher `queue.on`. [see kue queue events for more explanation](https://github.com/LearnBoost/kue#queue-events)
 
 Example:
 ```js
@@ -62,9 +62,33 @@ var publisher = sails.hooks.publisher;
 //add listener on the queue
 publisher
           .queue
-          .on('job complete', function(id, deliveryStatus) {
+          .on('job complete', function(id, jobResult) {
               //your codes here
           });
+```
+
+## Configuration
+`sails-hook-publisher` accept application defined configuration by utilizing sails configuration api. In sails `config` directory add `config/publisher.js` and you will be able to override all the defauts configurations.
+
+Simply, copy the below and add it to your `config/publisher.js`
+```js
+module.exports.publisher = {
+    //default key prefix for kue in
+    //redis server
+    prefix: 'q',
+
+    //default redis configuration
+    redis: {
+        //default redis server port
+        port: 6379,
+        //default redis server host
+        host: '127.0.0.1'
+    },
+    //number of milliseconds
+    //to wait 
+    //before shutdown publisher
+    shutdownDelay: 5000
+}
 ```
 
 ## Testing
