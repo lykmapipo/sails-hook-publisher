@@ -1,7 +1,7 @@
 sails-hook-publisher
 ====================
 
-[![Build Status](https://travis-ci.org/lykmapipo/sails-hook-publisher.svg?branch=master)](https://travis-ci.org/lykmapipo/sails-model-new)
+[![Build Status](https://travis-ci.org/lykmapipo/sails-hook-publisher.svg?branch=master)](https://travis-ci.org/lykmapipo/sails-hook-publisher)
 
 [![Tips](https://img.shields.io/gratipay/lykmapipo.svg)](https://gratipay.com/lykmapipo/)
 
