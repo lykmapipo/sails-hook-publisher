@@ -1,7 +1,8 @@
+'use strict';
+
 var expect = require('chai').expect;
 var kue = require('kue');
 var faker = require('faker');
-var async = require('async');
 
 var email = faker.internet.email();
 var username = faker.internet.userName();

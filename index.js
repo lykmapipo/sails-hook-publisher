@@ -1,3 +1,5 @@
+'use strict';
+
 /**
  * @description Kue based job publisher(producer) for sails.
  *
@@ -91,12 +93,12 @@ module.exports = function(sails) {
                                 sails.emit('subscribe:shutdown', error || '');
 
                             }, config.shutdownDelay);
-                    };
+                    }
 
                     //gracefully shutdown
                     //publisher
-                    sails.on("lower", shutdown);
-                    sails.on("lowering", shutdown);
+                    sails.on('lower', shutdown);
+                    sails.on('lowering', shutdown);
 
                     //tell external world we are up
                     //and running
