@@ -8,7 +8,6 @@
  */
 module.exports = function(sails) {
     var kue = require('kue');
-    var _ = require('lodash');
 
     //reference kue based queue
     var publisher;
@@ -18,21 +17,27 @@ module.exports = function(sails) {
 
         //Defaults configurations
         defaults: {
-            // default key prefix for kue in
-            // redis server
-            prefix: 'q',
+            __configKey__: {
+                //control activeness of publisher
+                //its active by default
+                active: true,
 
-            //default redis configuration
-            redis: {
-                //default redis server port
-                port: 6379,
-                //default redis server host
-                host: '127.0.0.1'
-            },
-            //number of milliseconds
-            //to wait 
-            //before shutdown publisher
-            shutdownDelay: 5000
+                // default key prefix for kue in
+                // redis server
+                prefix: 'q',
+
+                //default redis configuration
+                redis: {
+                    //default redis server port
+                    port: 6379,
+                    //default redis server host
+                    host: '127.0.0.1'
+                },
+                //number of milliseconds
+                //to wait 
+                //before shutdown publisher
+                shutdownDelay: 5000
+            }
         },
 
         //expose kue create
@@ -56,8 +61,13 @@ module.exports = function(sails) {
             //extend defaults configuration
             //with provided configuration from sails
             //config
-            var config =
-                _.extend(hook.defaults, sails.config.publisher);
+            var config = sails.config[this.configKey];
+
+            // If the hook has been deactivated, just return
+            if (!config.active) {
+                sails.log.info('sails-hooks-publisher deactivated.');
+                return done();
+            }
 
             // Lets wait on some of the sails core hooks to
             // finish loading before 
@@ -85,14 +95,14 @@ module.exports = function(sails) {
                     hook.createJob = publisher.create;
 
                     //shutdown kue publisher
-                    //and wait for time equla to `shutdownDelay` 
+                    //and wait for time equal to `shutdownDelay` 
                     //for workers to finalize their jobs
                     function shutdown() {
                         publisher
-                            .shutdown(function(error) {
+                            .shutdown(config.shutdownDelay, function(error) {
                                 sails.emit('subscribe:shutdown', error || '');
 
-                            }, config.shutdownDelay);
+                            });
                     }
 
                     //gracefully shutdown

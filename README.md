@@ -3,13 +3,7 @@ sails-hook-publisher
 
 [![Build Status](https://travis-ci.org/lykmapipo/sails-hook-publisher.svg?branch=master)](https://travis-ci.org/lykmapipo/sails-hook-publisher)
 
-[![Tips](https://img.shields.io/gratipay/lykmapipo.svg)](https://gratipay.com/lykmapipo/)
-
-[![Support via Gratipay](https://cdn.rawgit.com/gratipay/gratipay-badge/2.3.0/dist/gratipay.svg)](https://gratipay.com/lykmapipo/)
-
-Kue based job publisher(producer) for sails. Its a wrapper around [Kue](https://github.com/learnboost/kue) for publishing jobs by using [redis](https://github.com/antirez/redis) as a queue engine.
-
-*Note: This requires Sails v0.11.0+.  If v0.11.0+ isn't published to NPM yet, you'll need to install it via Github.*
+Kue based job publisher(producer) for sails v0.11.0+. Its a wrapper around [Kue](https://github.com/learnboost/kue) for publishing jobs by using [redis](https://github.com/antirez/redis) as a queue engine.
 
 ## Installation
 ```js
@@ -73,6 +67,10 @@ publisher
 Simply, copy the below and add it to your `config/publisher.js`
 ```js
 module.exports.publisher = {
+    //control activeness of publisher
+    //its active by default
+    active: true,
+                
     //default key prefix for kue in
     //redis server
     prefix: 'q',

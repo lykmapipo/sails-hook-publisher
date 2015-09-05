@@ -15,13 +15,11 @@ describe('Hook#publisher', function() {
     });
 
     it('should have defaults configuration', function(done) {
-        var publisher = sails.hooks.publisher;
-
-        expect(publisher.defaults).to.not.be.null;
-        expect(publisher.defaults.prefix).to.equal('q');
-        expect(publisher.defaults.shutdownDelay).to.equal(5000);
-        expect(publisher.defaults.redis.port).to.equal(6379);
-        expect(publisher.defaults.redis.host).to.equal('127.0.0.1');
+        expect(sails.config.publisher).to.not.be.null;
+        expect(sails.config.publisher.prefix).to.equal('q');
+        expect(sails.config.publisher.shutdownDelay).to.equal(5000);
+        expect(sails.config.publisher.redis.port).to.equal(6379);
+        expect(sails.config.publisher.redis.host).to.equal('127.0.0.1');
 
         done();
     });
