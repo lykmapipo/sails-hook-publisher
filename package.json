@@ -38,7 +38,7 @@
         "isHook": true
     },
     "dependencies": {
-        "kue": "^0.11.5"
+        "kue": "^0.11.6"
     },
     "devDependencies": {
         "async": "^0.9.0",
