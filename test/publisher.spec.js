@@ -24,6 +24,11 @@ describe('Hook#publisher', function() {
         done();
     });
 
+    it('should be able to use redis config from global sails.config', function(done) {
+      expect(sails.config.publisher.redis.host).to.equal(sails.config.redis.host);
+      done();
+    });
+
     it('should have a queue to create job(s) and listen for queue events', function(done) {
         var publisher = sails.hooks.publisher;
 
