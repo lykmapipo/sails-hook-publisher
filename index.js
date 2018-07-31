@@ -12,11 +12,9 @@ module.exports = function(sails) {
     //reference kue based queue
     var publisher;
     /**
-     * Retrieve the default hooks configs with any other global redis config
+     * Extend the default hooks configs with any other global redis config
      */
-    function getDefaultConfig() {
-      //get extended default config
-      var config = sails.config[this.configKey] || {};
+    function extendDefaultConfig(config) {
       // extend any custom redis configs based on specific global env config
       if (sails.config.redis) { 
         config = Object.assign(config, {'redis':Object.assign(config.redis, sails.config.redis)});
@@ -74,7 +72,7 @@ module.exports = function(sails) {
             //extend defaults configuration
             //with provided configuration from sails
             //config
-            var config = getDefaultConfig.call(this);
+            var config = extendDefaultConfig(sails.config[this.configKey]);
             
             // If the hook has been deactivated, just return
             if (!config.active) {
