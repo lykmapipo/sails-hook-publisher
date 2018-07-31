@@ -14,6 +14,9 @@ before(function(done) {
         .lift({ // configuration for testing purposes
             port: 7070,
             environment: 'test',
+            redis: {
+              host: '127.0.0.1'
+            },
             log: {
                 noShip: true
             },
